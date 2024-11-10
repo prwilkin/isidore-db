@@ -19,7 +19,10 @@ def generate_key(password: str, salt: bytes) -> bytes:
 
 
 # Function to encrypt data
-def encrypt_data(data: str, password: str) -> tuple:
+def encrypt_data(data: str, password: str = None) -> tuple:
+    if password is None:
+        load_dotenv()
+        password = os.getenv("ENCRYPTION_PASSWORD")
     salt = os.urandom(16)  # Dynamically generate a random salt for each encryption
     key = generate_key(password, salt)  # Generate key from password and dynamic salt
     iv = os.urandom(16)  # Generate a random 16-byte IV
@@ -30,7 +33,10 @@ def encrypt_data(data: str, password: str) -> tuple:
 
 
 # Function to decrypt data
-def decrypt_data(encrypted_data: bytes, password: str, iv: bytes, salt: bytes) -> str:
+def decrypt_data(encrypted_data: bytes, iv: bytes, salt: bytes, password: str = None) -> str:
+    if password is None:
+        load_dotenv()
+        password = os.getenv("ENCRYPTION_PASSWORD")
     key = generate_key(password, salt)  # Regenerate key using the same password and salt
     cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
     decryptor = cipher.decryptor()
@@ -39,8 +45,6 @@ def decrypt_data(encrypted_data: bytes, password: str, iv: bytes, salt: bytes) -
 
 def rotate_data(encrypted_data: bytes, password: str, iv: bytes, salt: bytes) -> tuple:
     decrypted_data = decrypt_data(encrypted_data, password, iv, salt)
-    load_dotenv()
-    password = os.getenv("ENCRYPTION_PASSWORD")
-    encrypted_data, iv, salt = encrypt_data(decrypted_data, password)
+    encrypted_data, iv, salt = encrypt_data(decrypted_data)
     return encrypted_data, iv, salt
 
